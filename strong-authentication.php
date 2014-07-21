@@ -15,7 +15,7 @@ Description: Wordpress Strong Authentication lets you authenticate users with a 
 	plugin forwards authentication requests to this backend, which you can easily run
 	on the same machine or anywhere in your network.
 	
-Version: 0.9
+Version: 1.0
 Author: Cornelius Kölbel
 
     Copyright (C) 2014 Cornelius Kölbel (corny@cornelinux.de)
@@ -49,7 +49,7 @@ class StrongAuthentication {
         }
 
 
-        public function strong_auth($user="", $pass="", $realm="") {
+        public function strong_auth($user="", $pass="", $realm="", $decode=true) {
                 $ret=false;
                 try {
                         $server = $this->server;
@@ -67,11 +67,16 @@ class StrongAuthentication {
                         $r=curl_exec($ch);
                         curl_close($ch);
 
-
-                        $jObject = json_decode($r);
-                        if (true == $jObject->{'result'}->{'status'} )
+                        if ($decode == true) {
+                        	$jObject = json_decode($r);
+                        	error_log("received this result: $r");
+                        	if (true == $jObject->{'result'}->{'status'} )
                                 if (true == $jObject->{'result'}->{'value'} )
                                         $ret=true;
+                        } else {
+                        	// We do not decode, but return the result as is.
+							$ret = $r;
+                        }
                 } catch (Exception $e) {
 						error_log("Error in receiving response from Authentication server: $e");
                 }
@@ -101,6 +106,34 @@ function strong_auth_add_menu() {
 	add_options_page("Strong Authentication", "Strong Authentication", 10, __FILE__,"strong_auth_display_options");
 }
 
+// function that runs when changes are saved.
+function strong_auth_on_save_changes(){
+	error_log("Running strong auth on save changes");
+	$username = "unknown_user";
+	$password = "doesnotmatch";
+	$realm = get_option('strong_authentication_realm');
+	$server = get_option('strong_authentication_server');
+	// get SSL options
+	$verify_peer = get_option('strong_authentication_verify_peer');
+	$verify_host = get_option('strong_authentication_verify_host');
+	$l = new StrongAuthentication( $server, $verify_peer, $verify_host );
+	$r = $l->strong_auth($username, $password, $realm, false);
+	if (strpos($r, '"status": true')!==false) {
+		add_settings_error(
+		'strongAuthInfo',
+		"auth_server_configured",
+		"Authentication server configured successfully: $r",
+		'updated');
+	} else {
+		add_settings_error(
+		'strongAuthInfo',
+		"auth_server_configured",
+		"Faulty authentication server configuration: $r",
+		'error');
+	}
+	
+}
+
 //actual configuration screen
 function strong_auth_display_options() { 
 ?>
@@ -110,10 +143,16 @@ function strong_auth_display_options() {
 	<?php settings_fields('strong_auth'); ?>
         <h3>privacyIDEA Settings</h3>
           <strong>Make sure your admin accounts also exist in the privacyIDEA server.</strong>
+          <p>
+          Each time you change values the authentication against the 
+          privacyIDEA server is checked. In case of success you will get 
+          a response containing "status": true.
+          </p>
         <table class="form-table">
         <tr valign="top">
             <th scope="row"><label>Authentication server name</label></th>
-				<td><input type="text" name="strong_authentication_server" 
+				<td><input type="text" name="strong_authentication_server"
+				id='strong_authentication_server' 
 				value="<?php echo get_option('strong_authentication_server'); ?>" /> </td>
 				<td><span class="description"><strong style="color:red;">required</strong>
 				The FQDN of the privacyIDEA server. This is in the format including
@@ -123,14 +162,16 @@ function strong_auth_display_options() {
         </tr>
         <tr valign="top">
             <th scope="row"><label>Realm</label></th>
-				<td><input type="text" name="strong_authentication_realm" 
+				<td><input type="text" name="strong_authentication_realm"
+				id='strong_authentication_realm' 
 				value="<?php echo get_option('strong_authentication_realm'); ?>" /> </td>
 				<td><span class="description">The realm of the user in the 
 					privacyIDEA server. Leave empty if you use default realm.</span> </td>
         </tr>
         <tr valign="top">
             <th scope="row"><label>Verify Host</label></th>
-				<td><select name="strong_authentication_verify_host">
+				<td><select name="strong_authentication_verify_host"
+				id="strong_authentication_verify_host">
 				<option value=0  <?php 
 									if (get_option('strong_authentication_verify_host')==0)
 										print "selected";
@@ -150,7 +191,8 @@ function strong_auth_display_options() {
         </tr>        
         <tr valign="top">
             <th scope="row"><label>Verify Peer</label></th>
-				<td><select name="strong_authentication_verify_peer">
+				<td><select name="strong_authentication_verify_peer"
+				id="strong_authentication_verify_peer">
 				<option value=0  <?php 
 									if (get_option('strong_authentication_verify_peer')==0)
 										print "selected";
@@ -180,11 +222,11 @@ function strong_auth_display_options() {
 				misconfigured this plugin or your privacyIDEA server went down. 
 				</span></td>
         </tr>
-        </table>	
-	<p class="submit">
+        </table>
+	<p class="submit"> 
 	<input type="submit" name="Submit" value="Save changes" />
 	</p>
-	</form>
+	</form>	
 	</div>
 <?php
 }
@@ -217,7 +259,7 @@ function wp_authenticate($username,$password) {
     	$verify_host = get_option('strong_authentication_verify_host');
     	$realm = get_option('strong_authentication_realm');
         $l = new StrongAuthentication( $server, $verify_peer, $verify_host );
-        $r = $l->strong_auth($username, $password, $realm);
+        $r = $l->strong_auth($username, $password, $realm, true);
 	
 		if ($r) {
 			$user = new WP_User( $username );
@@ -234,7 +276,12 @@ function wp_authenticate($username,$password) {
 }
 endif;
 
+
 add_action('admin_init', 'strong_auth_init' );
 add_action('admin_menu', 'strong_auth_add_menu');
+add_action('update_option_strong_authentication_server', 'strong_auth_on_save_changes');
+add_action('update_option_strong_authentication_verify_host', 'strong_auth_on_save_changes');
+add_action('update_option_strong_authentication_verify_peer', 'strong_auth_on_save_changes');
+add_action('update_option_strong_authentication_realm', 'strong_auth_on_save_changes');
 
 register_activation_hook( __FILE__, 'strong_auth_activate' );
