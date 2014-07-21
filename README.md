@@ -39,7 +39,11 @@ Troubleshooting
 
 If you misconfigured the plugin, you might not be able to authenticate anymore!
 
-In this case you either should delete this plugin.
+So it is always a good idea to add some users to the "excluded users" list.
+These users will be able to authenticate without a second factor and
+even if the authentication server should be down.
 
+Another possibility is to disable the plugin by removing or renaming the 
+plugin directory.
 In this case is will fall back to the old wordpress passwords.
 
