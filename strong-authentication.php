@@ -53,7 +53,7 @@ class StrongAuthentication {
                 $ret=false;
                 try {
                         $server = $this->server;
-                        $REQUEST="https://$server/validate/check?user=$user&pass=$pass";
+                        $REQUEST="$server/validate/check?user=$user&pass=$pass";
                         if(""!=$realm)
                                 $REQUEST="$REQUEST&realm=$realm";
 
@@ -73,7 +73,7 @@ class StrongAuthentication {
                                 if (true == $jObject->{'result'}->{'value'} )
                                         $ret=true;
                 } catch (Exception $e) {
-			error_log("Error in receiving response from Authentication server: $e");
+						error_log("Error in receiving response from Authentication server: $e");
                 }
                 return $ret;
         }
@@ -116,7 +116,10 @@ function strong_auth_display_options() {
 				<td><input type="text" name="strong_authentication_server" 
 				value="<?php echo get_option('strong_authentication_server'); ?>" /> </td>
 				<td><span class="description"><strong style="color:red;">required</strong>
-				The FQDN of the privacyIDEA server.</span></td>
+				The FQDN of the privacyIDEA server. This is in the format including
+				the protocol and the port, if it is not a default port. i.e.:
+				<em>https://10.1.2.3:1443</em>.
+				</span></td>
         </tr>
         <tr valign="top">
             <th scope="row"><label>Realm</label></th>
