@@ -50,14 +50,14 @@ Wordpress.
 
 == Frequently Asked Questions ==
 
-===Q: What happens if my authentication backend is offline===
+Q: What happens if my authentication backend is offline?
 
-If your authentication backend is offline, the users are not able
-to authenticate with OTP. This is the same as if you SQL server is down
-or your LDAP server is not reachable.
+A: If your authentication backend is offline, the users are not able
+   to authenticate with OTP. This is the same as if you SQL server is down
+   or your LDAP server is not reachable.
 
-Alas, you can configure certain users, who will not be authenticated against
-the backend but within wordpres. This can be an emergency entry.
+   Alas, you can configure certain users, who will not be authenticated against
+   the backend but within wordpres. This can be an emergency entry.
 
 == Changelog ==
 

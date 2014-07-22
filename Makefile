@@ -25,6 +25,6 @@ svn:
 	svn co http://plugins.svn.wordpress.org/strong-authentication ${SVNDIR}
 	cp *.php ${SVNDIR}/trunk/
 	cp readme.txt LICENSE AUTHORS ${SVNDIR}/trunk/
-	(cd ${SVNDIR}; svn add trunk/*)
+#	(cd ${SVNDIR}; svn add trunk/*)
 	(cd ${SVNDIR}; svn ci --username cornelinux)
 	
