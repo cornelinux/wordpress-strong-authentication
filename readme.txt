@@ -27,7 +27,11 @@ on the same machine or anywhere in your network.
 
 == Installation ==
 
-For installing the wordpress plugin simplay copy the file 
+You can install this plugin from within your wordpress plugin menu.
+
+Alternatively you can install it manually:
+
+For installing the wordpress plugin simply copy the file 
 wp-strong-authentication.php to the wordpress directory
 
   ./wp-content/plugins
@@ -35,7 +39,9 @@ wp-strong-authentication.php to the wordpress directory
 == Configuration ==
 
 Please add at least a hostname or IP address of your backend server privacyIDEA.
-If you do not want to verify the SSL certificate in this connection, enter "0" at the verification configuration.
+You need to enter the hostname together with the protocol and the port, if it is
+not a standard port.
+If you are using self signed certificates, you should disable the verification of hostname and peer.
 
 Please note: You need to have the same users in the LinOTP server. 
 You can achieve this by configuring an SQL Resolver and presetting this to
@@ -43,6 +49,15 @@ Wordpress.
 
 
 == Frequently Asked Questions ==
+
+===Q: What happens if my authentication backend is offline===
+
+If your authentication backend is offline, the users are not able
+to authenticate with OTP. This is the same as if you SQL server is down
+or your LDAP server is not reachable.
+
+Alas, you can configure certain users, who will not be authenticated against
+the backend but within wordpres. This can be an emergency entry.
 
 == Changelog ==
 
