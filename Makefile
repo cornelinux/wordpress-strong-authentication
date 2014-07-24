@@ -1,7 +1,7 @@
 info:
 	@echo "zip           - create a zip file for manually uploading"
 	@echo "clean         - remove built stuff"
-	@echo "svn	     - upload to wordpress hosted svn"
+	@echo "svn           - upload to wordpress hosted svn"
 
 
 PLUGIN_NAME="strong_authentication"

@@ -15,7 +15,7 @@ Description: Wordpress Strong Authentication lets you authenticate users with a 
 	plugin forwards authentication requests to this backend, which you can easily run
 	on the same machine or anywhere in your network.
 	
-Version: 1.0
+Version: 1.1
 Author: Cornelius Kölbel
 
     Copyright (C) 2014 Cornelius Kölbel (corny@cornelinux.de)
@@ -34,18 +34,20 @@ Author: Cornelius Kölbel
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+if( !class_exists( 'WP_Http' ) )
+	include_once( ABSPATH . WPINC. '/class-http.php' );
 
 
 class StrongAuthentication {
         private $server, $verify_peer, $verify_host;
 
-        public function __construct( $server = "localhost",  $verify_peer=0, $verify_host=0) {
+        public function __construct( $server = "localhost",  $verify_peer=0 ) {
                 $this->server=$server;
                 # can be 0 or 2
                 #$verify_host = 0;
                 #$verify_peer = 0;
-                $this->verify_peer=$verify_peer;
-                $this->verify_host=$verify_host;
+                $this->verify_peer=($verify_peer==2);
+                //$this->verify_host=($verify_host==2);
         }
 
 
@@ -53,29 +55,25 @@ class StrongAuthentication {
                 $ret=false;
                 try {
                         $server = $this->server;
-                        $REQUEST="$server/validate/check?user=$user&pass=$pass";
+                        $URL="$server/validate/check?user=$user&pass=$pass";
                         if(""!=$realm)
-                                $REQUEST="$REQUEST&realm=$realm";
+                                $URL="$URL&realm=$realm";
 
-                        if(!function_exists("curl_init"))
-                                die("PHP cURL extension is not installed");
-
-                        $ch=curl_init($REQUEST);
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verify_peer);
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $this->verify_host);
-                        $r=curl_exec($ch);
-                        curl_close($ch);
-
-                        if ($decode == true) {
-                        	$jObject = json_decode($r);
-                        	error_log("received this result: $r");
-                        	if (true == $jObject->{'result'}->{'status'} )
-                                if (true == $jObject->{'result'}->{'value'} )
-                                        $ret=true;
-                        } else {
-                        	// We do not decode, but return the result as is.
-							$ret = $r;
+                        $request = wp_remote_post($URL, array('sslverify'=> $this->verify_peer));
+                        if( is_wp_error($request) )
+                        	error_log($result->get_error_message());
+                        else {                        
+							$r_body = wp_remote_retrieve_body($request);	
+	                        if ($decode == true) {
+	                        	$jObject = json_decode($r_body);
+	                        	error_log("received this result: $r_body");
+	                        	if (true == $jObject->{'result'}->{'status'} )
+	                                if (true == $jObject->{'result'}->{'value'} )
+	                                        $ret=true;
+	                        } else {
+	                        	// We do not decode, but return the result as is.
+								$ret = $r_body;
+	                        }
                         }
                 } catch (Exception $e) {
 						error_log("Error in receiving response from Authentication server: $e");
@@ -86,7 +84,7 @@ class StrongAuthentication {
 
 function strong_auth_activate(){
 	add_option('strong_authentication_server',"localhost:5001","The FQDN of the Authentication server. This server must be reached via https.");
-	add_option('strong_authentication_verify_host',0,"Wether the hostname of the certificate shall be verified (0 or 2)");
+	//add_option('strong_authentication_verify_host',0,"Wether the hostname of the certificate shall be verified (0 or 2)");
 	add_option('strong_authentication_verify_peer',0,"Wether the certificate shall be verified (0 or 2)");
 	add_option('strong_authentication_realm',"","The Realm in the Authentication server. Leave empty if you want to use the default realm.");
 	add_option('strong_authentication_exclude_users',"","User who do not need to do strong authentication");
@@ -95,7 +93,7 @@ function strong_auth_activate(){
 
 function strong_auth_init(){
 	register_setting('strong_auth','strong_authentication_server');
-	register_setting('strong_auth','strong_authentication_verify_host');
+	//register_setting('strong_auth','strong_authentication_verify_host');
 	register_setting('strong_auth','strong_authentication_verify_peer');
 	register_setting('strong_auth','strong_authentication_realm');
 	register_setting('strong_auth','strong_authentication_exclude_users');
@@ -115,8 +113,8 @@ function strong_auth_on_save_changes(){
 	$server = get_option('strong_authentication_server');
 	// get SSL options
 	$verify_peer = get_option('strong_authentication_verify_peer');
-	$verify_host = get_option('strong_authentication_verify_host');
-	$l = new StrongAuthentication( $server, $verify_peer, $verify_host );
+	//$verify_host = get_option('strong_authentication_verify_host');
+	$l = new StrongAuthentication( $server, $verify_peer );
 	$r = $l->strong_auth($username, $password, $realm, false);
 	if (strpos($r, '"status": true')!==false) {
 		add_settings_error(
@@ -169,26 +167,6 @@ function strong_auth_display_options() {
 					privacyIDEA server. Leave empty if you use default realm.</span> </td>
         </tr>
         <tr valign="top">
-            <th scope="row"><label>Verify Host</label></th>
-				<td><select name="strong_authentication_verify_host"
-				id="strong_authentication_verify_host">
-				<option value=0  <?php 
-									if (get_option('strong_authentication_verify_host')==0)
-										print "selected";
-								 	?>
-				>do not verify</option>
-				<option value=2 <?php 
-									if (get_option('strong_authentication_verify_host')==2)
-										print "selected";
-								 	?>
-				>verifiy hostname</option> 
-				
-				</select></td>
-				<td><span class="description">If you choose to verify the hostname, 
-				the given hostname must match the common name in the SSL certificate
-				of the peer.
-				</span></td>
-        </tr>        
         <tr valign="top">
             <th scope="row"><label>Verify Peer</label></th>
 				<td><select name="strong_authentication_verify_peer"
@@ -206,7 +184,7 @@ function strong_auth_display_options() {
 				</select> </td>
 				<td><span class="description">If you choose to verify the peer, 
 				the SSL certificate of the peer is verified, if it is valid,
-				i.e. if it has a correct signature and is not revoked.
+				i.e. if it has a correct hostname, a correct signature and is not revoked.
 				If you want to use self signed certificates you need to
 				choose "do not verify".
 				</span></td>
@@ -256,9 +234,9 @@ function wp_authenticate($username,$password) {
 		$server = get_option('strong_authentication_server');
 		// get SSL options
     	$verify_peer = get_option('strong_authentication_verify_peer');
-    	$verify_host = get_option('strong_authentication_verify_host');
+    	//$verify_host = get_option('strong_authentication_verify_host');
     	$realm = get_option('strong_authentication_realm');
-        $l = new StrongAuthentication( $server, $verify_peer, $verify_host );
+        $l = new StrongAuthentication( $server, $verify_peer );
         $r = $l->strong_auth($username, $password, $realm, true);
 	
 		if ($r) {
