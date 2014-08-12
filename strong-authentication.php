@@ -15,7 +15,7 @@ Description: Wordpress Strong Authentication lets you authenticate users with a 
 	plugin forwards authentication requests to this backend, which you can easily run
 	on the same machine or anywhere in your network.
 	
-Version: 1.1
+Version: 1.1.1
 Author: Cornelius Kölbel
 
     Copyright (C) 2014 Cornelius Kölbel (corny@cornelinux.de)
@@ -60,9 +60,9 @@ class StrongAuthentication {
                                 $URL="$URL&realm=$realm";
 
                         $request = wp_remote_post($URL, array('sslverify'=> $this->verify_peer));
-                        if( is_wp_error($request) )
-                        	error_log($result->get_error_message());
-                        else {                        
+                        if( is_wp_error($request) ) {
+                        	error_log("Error in strong authentication " . $request->get_error_message());
+                        } else {                        
 							$r_body = wp_remote_retrieve_body($request);	
 	                        if ($decode == true) {
 	                        	$jObject = json_decode($r_body);

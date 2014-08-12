@@ -60,6 +60,10 @@ A: If your authentication backend is offline, the users are not able
    the backend but within wordpres. This can be an emergency entry.
 
 == Changelog ==
+1.1.1
+
+* Fixed and error in displaying errors :-/ 
+
 1.1
 
 * remove php curl and use WP HTTP class instead
