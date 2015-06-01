@@ -4,7 +4,7 @@ Contributors: Cornelius Kölbel <corny@cornelinx.de>
 Tags: OTP, two factor authentication, strong authentication, privacyIDEA
 stable tag: trunk
 Requires at least: 3.6
-Tested up to: 3.9.1
+Tested up to: 4.2.2
 Stable tag:
 License: GPLv2
 
