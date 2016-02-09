@@ -4,16 +4,16 @@ Contributors: Cornelius Kölbel <corny@cornelinx.de>
 Tags: OTP, two factor authentication, strong authentication, privacyIDEA
 stable tag: trunk
 Requires at least: 3.6
-Tested up to: 4.2.2
+Tested up to: 4.4.2
 Stable tag:
 License: GPLv2
 
 == Description ==
 
 Wordpress Strong Authentication lets you authenticate users with a second
-factor of possession. Only if the user is able to provide this second factor,
-he is allowed to login.
+factor of possession. 
 
+Only if the user is able to provide this second factor, he is allowed to login.
 Such a second factor can be an OTP display card, an OTP hardware token, a Yubikey,
 a smartphone App like the Google Authenticator or access to an mobile phone
 to receive an SMS or access to an email account.
