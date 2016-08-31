@@ -4,7 +4,7 @@ Contributors: Cornelius Kölbel <corny@cornelinx.de>
 Tags: OTP, two factor authentication, strong authentication, privacyIDEA
 stable tag: trunk
 Requires at least: 3.6
-Tested up to: 4.4.2
+Tested up to: 4.6
 Stable tag:
 License: GPLv2
 
@@ -60,6 +60,10 @@ A: If your authentication backend is offline, the users are not able
    the backend but within wordpres. This can be an emergency entry.
 
 == Changelog ==
+1.2
+
+* Add user-agent to POST request
+
 1.1.1
 
 * Fixed and error in displaying errors :-/ 
