@@ -15,7 +15,7 @@ Description: Wordpress Strong Authentication lets you authenticate users with a 
 	plugin forwards authentication requests to this backend, which you can easily run
 	on the same machine or anywhere in your network.
 	
-Version: 1.2
+Version: 1.2.1
 Author: Cornelius Kölbel
 
     Copyright (C) 2014-2016 Cornelius Kölbel (corny@cornelinux.de)
