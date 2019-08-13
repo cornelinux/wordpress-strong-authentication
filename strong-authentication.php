@@ -39,49 +39,45 @@ if( !class_exists( 'WP_Http' ) )
 
 
 class StrongAuthentication {
-        private $server, $verify_peer, $verify_host;
+    private $server, $verify_peer, $verify_host;
 
-        public function __construct( $server = "localhost",  $verify_peer=0 ) {
-                $this->server=$server;
-                # can be 0 or 2
-                #$verify_host = 0;
-                #$verify_peer = 0;
-                $this->verify_peer=($verify_peer==2);
-                //$this->verify_host=($verify_host==2);
+    public function __construct( $server = "localhost",  $verify_peer=0 ) {
+        $this->server=$server;
+        # can be 0 or 2
+        #$verify_host = 0;
+        #$verify_peer = 0;
+        $this->verify_peer=($verify_peer==2);
+        //$this->verify_host=($verify_host==2);
+    }
+
+
+    public function strong_auth($user="", $pass="", $realm="") {
+
+        $params = array(
+            "user" => $user,
+            "pass" => $pass,
+            "realm" => $realm,
+        );
+
+        $curl_instance = curl_init();
+        $url = $this->server . "/validate/check";
+        curl_setopt($curl_instance, CURLOPT_URL, $url);
+        curl_setopt($curl_instance, CURLOPT_HEADER, true);
+        curl_setopt($curl_instance, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl_instance, CURLOPT_USERAGENT, "Wordpress");
+        curl_setopt($curl_instance, CURLOPT_POST, 3);
+        curl_setopt($curl_instance, CURLOPT_POSTFIELDS, $params);
+        if ($this->verify_peer) {
+            curl_setopt($curl_instance, CURLOPT_SSL_VERIFYPEER, 2);
+        } else {
+            curl_setopt($curl_instance, CURLOPT_SSL_VERIFYPEER, 0);
         }
-
-
-        public function strong_auth($user="", $pass="", $realm="", $decode=true) {
-                $ret=false;
-                try {
-                        $server = $this->server;
-                        $URL="$server/validate/check?user=$user&pass=$pass";
-                        if(""!=$realm)
-                                $URL="$URL&realm=$realm";
-
-                        $request = wp_remote_post($URL, 
-							array('sslverify'=> $this->verify_peer,
-							      'user-agent' => "Wordpress"));
-                        if( is_wp_error($request) ) {
-                        	error_log("Error in strong authentication " . $request->get_error_message());
-                        } else {                        
-							$r_body = wp_remote_retrieve_body($request);	
-	                        if ($decode == true) {
-	                        	$jObject = json_decode($r_body);
-	                        	error_log("received this result: $r_body");
-	                        	if (true == $jObject->{'result'}->{'status'} )
-	                                if (true == $jObject->{'result'}->{'value'} )
-	                                        $ret=true;
-	                        } else {
-	                        	// We do not decode, but return the result as is.
-								$ret = $r_body;
-	                        }
-                        }
-                } catch (Exception $e) {
-						error_log("Error in receiving response from Authentication server: $e");
-                }
-                return $ret;
-        }
+        $response = curl_exec($curl_instance);
+        $header_size = curl_getinfo($curl_instance, CURLINFO_HEADER_SIZE);
+        $body = json_decode(substr($response, $header_size));
+        $result = $body->result->value;
+        return $result;
+    }
 }
 
 function strong_auth_activate(){
